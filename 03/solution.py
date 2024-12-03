@@ -23,12 +23,12 @@ def pull_commands(line):
     """
     bare_commands = re.findall(RE_COMMAND, line)
     commands = []
-    for cmd in bare_commands:
-        if cmd[0] and cmd[1]:
-            commands.append( (int(cmd[0]), int(cmd[1])) )
-        elif cmd[2] == "do":
+    for x,y,do,dont in bare_commands:
+        if x and y:
+            commands.append( (int(x), int(y)) )
+        elif do:
             commands.append("do")
-        elif cmd[3] == "don't":
+        elif dont:
             commands.append("don't")
     return commands
 
