@@ -62,21 +62,19 @@ print(f'Part 1: {checksum}')
 
 
 def dense_map_to_files_and_gaps(dense_map):
-    """Convert a dense map to a list of files and a dict of gaps.
+    """Convert a dense map to a list of files and a list of gaps.
     
     files is a list of (start index, size) tuples.
-    gaps is a dict mapping start index to size.
+    gaps is a list of (start index, size) tuples.
     """
-    gaps = {}
+    gaps = []
     files = []
     index = 0
     for i, item in enumerate(dense_map):
         if i % 2 == 0:
-            # File
             files.append((index, item))
         else:
-            # Gap
-            gaps[index] = item
+            gaps.append((index, item))
         index += item
     return files, gaps
 
@@ -95,14 +93,16 @@ def defrag_by_file(files, gaps):
     """
     for f, (start, size) in reversed(list(enumerate(files))):
         # Try each potential gap before where the file is now
-        for gap_start in range(0, start):
+        for g, gap in enumerate(gaps):
+            gap_start, gap_size = gap
+            if gap_start >= start:
+                continue
             # Check if the gap is big enough
-            gap_size = gaps.get(gap_start, 0)
             if gap_size >= size:
                 # Move the file to this gap
                 files[f] = (gap_start, size)
-                del gaps[gap_start]
-                gaps[gap_start + size] = gap_size - size
+                # Edit the gap to reflect the new gap
+                gaps[g] = (gap_start + size, gap_size - size)
                 break
     return files, gaps
 
