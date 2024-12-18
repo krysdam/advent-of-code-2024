@@ -28,8 +28,8 @@ def grid_index(grid, r, c):
         return grid[r][c]
     return None
 
-def a_star(grid, start, end):
-    """A* pathfinding algorithm."""
+def find_path(grid, start, end):
+    """Find a path of AIR from start to end in the grid."""
     # Build predecessor dict until end is reached
     frontier = [start]
     predecessor = {start: None}
@@ -70,7 +70,7 @@ def grid_after_n_walls(falling_queue, n):
 def path_after_n_walls(falling_queue, n):
     """Return the length of the path from (0, 0) to (70, 70) after n walls."""
     grid = grid_after_n_walls(falling_queue, n)
-    path = a_star(grid, (0, 0), (70, 70))
+    path = find_path(grid, (0, 0), (70, 70))
     if path:
         return len(path)
     return -1
