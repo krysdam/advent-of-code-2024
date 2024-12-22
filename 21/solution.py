@@ -82,19 +82,28 @@ def key_to_key_path(key1, key2):
     rightward = (x2 - x1)
     downward  = (y2 - y1)
 
-    # Make strings (eg: > or <<, and ^ or vv).
-    horizontal = '>' * max(0, rightward) + '<' * max(0, -rightward)
-    vertical   = 'v' * max(0, downward)  + '^' * max(0, -downward)
+    # Make strings for each direction (note that at least two will be empty)
+    right = '>' * max(0,  rightward)
+    left  = '<' * max(0, -rightward)
+    down  = 'v' * max(0,  downward)
+    up    = '^' * max(0, -downward)
 
     # If moving horizontal first puts us on the gap, move vertical first.
     if (y1, x2) == pad['gap']:
-        return vertical + horizontal
+        return (down + up)  +  (right + left)
     # If moving vertical first puts us on the gap, move horizontal first.
     if (y2, x1) == pad['gap']:
-        return horizontal + vertical
+        return (right + left)  +  (down + up)
     
-    # Else, by fiat, move horizontal first.
-    return horizontal + vertical
+    # Otherwise use this magic order.
+    return down + right + left + up
+    #return down + right + left + up # THIS IS IT!!!!
+    #return down + left + up + right # This one also works
+    #return down + left + right + up # This also works
+    #return left + up + down + right # This works
+    #return left + down + up + right # This works
+    #return left + down + right + up # This works
+
     
 
 def path(code):
