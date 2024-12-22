@@ -159,18 +159,23 @@ with open('input.txt', 'r') as f:
         line = line.strip()
         codes.append(line)
 
+# Note that the problem emphasizes the "two" robots,
+# but there are definitelly *three* intermediaries.
+# If I were entering the door code, that would be 0 intermediaries.
+# The situation is that plus three robots in between.
+# To put it another way, there are as many intermediaries
+# as there are directional pads (each adds one layer of abstraction).
+# So there are 3.
 total = 0
 for code in codes:
     total += complexity(code, intermediaries=3)
 print(f'Part 1: {total}')
 print('\n')
 
+# In part 2, again the problem emphasizes there are "25" robots,
+# but for the same reasons this is 26 intermediaries.
 total = 0
 for code in codes:
     total += complexity(code, intermediaries=26)
 print(f'Part 2: {total}')
 print('\n')
-
-
-# Now that all this is here, I *think* this shape of problem is amenable to analysis.
-#
