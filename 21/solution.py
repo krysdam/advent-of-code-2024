@@ -37,7 +37,7 @@ import time
 # Repair for this problem: There is always some universally best order anyway.
 #         For example, "if you're moving up and left, move left before up."
 #         Or perhaps the opposite. I found out by trying all 4 factorial orders.
-#         Turns out one good rule is: downs, then rights, then lefts, then ups.
+#         Turns out one good rule is: lefts, then ups, then downs, then rights.
 
 # 789
 # 456
@@ -106,7 +106,8 @@ def key_to_key_sequence(key1, key2):
         return (right + left)  +  (down + up)
     
     # Otherwise use this magic order.
-    return down + right + left + up
+    #return down + right + left + up
+    return left + up + down + right
     # This somehow guarantees the shortest sequence. See above.
     # In fact there are 6 orders like this (drlu, dlur, dlru, ludr, ldur, ldru).
     # I'm not exactly sure why this happens.
@@ -126,6 +127,7 @@ def sequence(code):
     return path
 
 
+@lru_cache(maxsize=None)
 def sequence_with_intermediaries(code, intermediaries=0):
     """Return the shortest sequence to produce the code via intermediaries.
     
@@ -134,22 +136,24 @@ def sequence_with_intermediaries(code, intermediaries=0):
     One intermediary means: return the motions to type the code.
     Two intermediaries means: return the motions to type those motions.
     """
-    result = code
-    last_result = time.time()
-    for r in range(intermediaries):
-        result = sequence(result)
-        delay = time.time() - last_result
-        last_result = time.time()
-
-        print(f'Level {r+1}: {len(result)} (took {delay:.2f}s)')
-    return result
+    #print(f"s_w_i({code}, {intermediaries})")
+    if intermediaries == 0:
+        return len(code)
+    length = 0
+    parts = code.split('A')
+    if parts[-1] == '':
+        del parts[-1]
+    parts = [part + 'A' for part in parts]
+    for part in parts:
+        length += sequence_with_intermediaries(sequence(part), intermediaries-1)
+    return length
 
 
 def complexity(code, intermediaries=0):
     """The complexity of the code (sequence length * numerical part)."""
-    length = len(sequence_with_intermediaries(code, intermediaries))
+    length = sequence_with_intermediaries(code, intermediaries)
     numeric_part = int(code[:-1])
-    print(code, length, numeric_part)
+    #print(code, length, numeric_part)
     return length * numeric_part
 
 
