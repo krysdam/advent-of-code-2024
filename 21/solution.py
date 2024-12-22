@@ -37,7 +37,7 @@ import time
 # Repair for this problem: There is always some universally best order anyway.
 #         For example, "if you're moving up and left, move left before up."
 #         Or perhaps the opposite. I found out by trying all 4 factorial orders.
-#         Turns out one good rule is: lefts, then ups, then downs, then rights.
+#         Turns out one good rule is: any left, then vertical, then any right.
 
 # 789
 # 456
@@ -106,15 +106,8 @@ def key_to_key_sequence(key1, key2):
         return (right + left)  +  (down + up)
     
     # Otherwise use this magic order.
-    #return down + right + left + up
     return left + up + down + right
     # This somehow guarantees the shortest sequence. See above.
-    # In fact there are 6 orders like this (drlu, dlur, dlru, ludr, ldur, ldru).
-    # I'm not exactly sure why this happens.
-    # Seems like the requirements are: down before right, left before up,
-    # and otherwise the order is irrelevant.
-    # I'm sure it has something to do with the arrangement of the
-    # directional pad, but I'm not sure exactly what.
 
 
 def sequence(code):
@@ -129,23 +122,28 @@ def sequence(code):
 
 @lru_cache(maxsize=None)
 def sequence_with_intermediaries(code, intermediaries=0):
-    """Return the shortest sequence to produce the code via intermediaries.
+    """Return the shortest seq length to produce the code via intermediaries.
     
     Intermediaries in the problem are robots.
-    Zero intermediaries means: return the code directly.
-    One intermediary means: return the motions to type the code.
-    Two intermediaries means: return the motions to type those motions.
+    0 intermediaries means: return the code's length itself.
+    1 intermediary means: return the number of motions to type the code.
+    2 intermediaries means: return the number of motions to type those motions.
     """
-    #print(f"s_w_i({code}, {intermediaries})")
+    # With no intermediaries, the sequence length is the code's length.
     if intermediaries == 0:
         return len(code)
+    # Split the code by A's, and find the sequence length to produce each one.
     length = 0
-    parts = code.split('A')
-    if parts[-1] == '':
-        del parts[-1]
-    parts = [part + 'A' for part in parts]
-    for part in parts:
-        length += sequence_with_intermediaries(sequence(part), intermediaries-1)
+    segments = code.split('A')
+    # If the code ends with A, splitting gives us a superfluous '' at the end.
+    if segments[-1] == '':
+        del segments[-1]
+    # Add the A back into each segment.
+    segments = [segment + 'A' for segment in segments]
+    # Find each segment's length
+    for segment in segments:
+        length += sequence_with_intermediaries(sequence(segment),
+                                               intermediaries-1)
     return length
 
 
@@ -174,7 +172,6 @@ total = 0
 for code in codes:
     total += complexity(code, intermediaries=3)
 print(f'Part 1: {total}')
-print('\n')
 
 # In part 2, again the problem emphasizes there are "25" robots,
 # but for the same reasons this is 26 intermediaries.
@@ -182,4 +179,3 @@ total = 0
 for code in codes:
     total += complexity(code, intermediaries=26)
 print(f'Part 2: {total}')
-print('\n')
