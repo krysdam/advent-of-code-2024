@@ -127,15 +127,19 @@ def sequence(code):
 
 
 def sequence_with_intermediaries(code, intermediaries=0):
+    """Return the shortest sequence to produce the code via intermediaries.
+    
+    Intermediaries in the problem are robots.
+    Zero intermediaries means: return the code directly.
+    One intermediary means: return the motions to type the code.
+    Two intermediaries means: return the motions to type those motions.
+    """
     result = code
     last_result = time.time()
-    delays = [1]
     for r in range(intermediaries):
         result = sequence(result)
         delay = time.time() - last_result
         last_result = time.time()
-        delay_ratio = delay / delays[-1]
-        delays.append(delay)
 
         print(f'Level {r+1}: {len(result)} (took {delay:.2f}s)')
     return result
@@ -163,6 +167,10 @@ print('\n')
 
 total = 0
 for code in codes:
-    total += complexity(code, intermediaries=25)
+    total += complexity(code, intermediaries=26)
 print(f'Part 2: {total}')
 print('\n')
+
+
+# Now that all this is here, I *think* this shape of problem is amenable to analysis.
+#
