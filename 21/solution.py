@@ -1,163 +1,115 @@
-import itertools
-from collections import defaultdict
-import math
-from functools import lru_cache
-
 # Me <^v> Robot <^v> Robot <^v> Robot 0123456789 Door
-#    step 3     step 2     step 1       step 0
+#    level 3    level 2    level 1      level 0
 
 
-# A step 0 code looks like 314A
-# A step 1 code looks like a loop of [ (right/left) (up/down) move, then A ]
-# A step 2 code is the same
-# A step 3 code is the same
+# A level 0 code looks like 314A.
+# A level 1 code looks like a loop of [ some ^<>v moves + A ].
+# Every level past that has the same structure.
 
-# How many directions for "19" are the shortest?
-# I need to move right 2 and up 2, in any order: (4 2) = 6 ways
-# Specifically these are A>>^^A, A>^>^A, A>^^>A, A^>>^A, A^>^>A, A^^>>A
+# Fact 1: The moves are some number of ^ or v, and some number of < or >.
+#         The vertical movement is one of: ^^^, ^^, ^, nothing, v, vv, vvv.
+#         The horizontal movement is one of: <<, <, nothing, >, >>.
 
-# How many of these can possibly be shortest at the next level?
-# The only possibly shortest ones are A>>^^A and A^^>>A = 2 ways
-# Is it possible that these are tied?
-# Yes, in fact they must be tied, because they are reverses of each other.
+# Fact 2: It's best to move all horizontal then all vertical, or vice versa,
+#         and not any other order like ^>^^>.
+#         The order doesn't change the length of the code,
+#         but changing from (for example) ^ to > and back needlessly
+#         will take extra moves on the next level.
 
-# In general:
-# How many directions for "MN" are the shortest?
+# Fact 3: It doesn't matter whether we do horizontal or vertical first,
+#         (as long as the resulting sequence doesn't go off the edge).
+#         There's no difference between (for example) >>^^^A and ^^^>>A,
+#         because at the next level (assuming we start at A),
+#         we either travel from A to > to ^ to A, or from A to ^ to > to A,
+#         and by symmetry the path length is the same.
+#         (And both orders clearly take 6 A presses).
 
-# Consider this:
-# Manually make two lists
-# What are the shortest free paths from M to N?     (as many as 9)
-# What are the shortest "smooth" paths from M to N? (as many as 2)
+# Consequence of all this:
+# For any starting key and destination key,
+# there's only one path between them that is worth considering.
+# For example from 1 to 9, we can define the path as ONLY >>^^,
+# and ignore all other orders, and never recalculate it.
 
-# Part 1 = free(smooth(smooth(code)))
+# 789
+# 456
+# 123
+#  0A
 
-# 0    789
-# 1    456
-# 2    123
-# 3     0A      ^ is on the same spot as 0
-# 4    <v>
+NUMPAD = {
+    '0': (3, 1),
+    '1': (2, 0),
+    '2': (2, 1),
+    '3': (2, 2),
+    '4': (1, 0),
+    '5': (1, 1),
+    '6': (1, 2),
+    '7': (0, 0),
+    '8': (0, 1),
+    '9': (0, 2),
+    'A': (3, 2),
+    'gap': (3, 0),
+}
 
-locations = {'0': (3, 1),
-             '1': (2, 0),
-             '2': (2, 1),
-             '3': (2, 2),
-             '4': (1, 0),
-             '5': (1, 1),
-             '6': (1, 2),
-             '7': (0, 0),
-             '8': (0, 1),
-             '9': (0, 2),
-             'A': (3, 2),
-             '^': (3, 1),
-             '<': (4, 0),
-             'v': (4, 1),
-             '>': (4, 2),
-            }
+#  ^A
+# <v>
 
-NUMPAD = "0123456789A"
-DIRPAD = "^<v>A"
+DIRPAD = {
+    '^': (0, 1),
+    '<': (1, 0),
+    'v': (1, 1),
+    '>': (1, 2),
+    'A': (0, 2),
+    'gap': (0, 0),
+}
 
-STEPS = {'^': (-1, 0),
-         '<': (0, -1),
-         'v': (1, 0),
-         '>': (0, 1),
-        }
-
-
-def manhattan_distance(start, end):
-    return abs(start[0] - end[0]) + abs(start[1] - end[1])
-
-
-@lru_cache(maxsize=None)
-def a_to_b_free(start, end):
-    if start == end:
-        return {''}
+def key_to_key_path(key1, key2):
+    """Return the "single worthwhile path" from key1 to key2.
     
-    paths = []
-    starty, startx = start
-    distance = manhattan_distance(start, end)
+    Other paths are possible, and maybe even equally good,
+    but that doesn't matter (see above).
+    """
+    # Determine which keypad we're using: numpad or dirpad.
+    if key1 == key2:
+        return ''
+    if key1 in NUMPAD and key2 in NUMPAD:
+        pad = NUMPAD
+    if key1 in DIRPAD and key2 in DIRPAD:
+        pad = DIRPAD
 
-    # Try all four directions
-    for step in STEPS:
-        dy, dx = STEPS[step]
-        newy, newx = starty + dy, startx + dx
-        # If we land on the gap at (3, 0), we can't go there
-        if (newy, newx) == (3, 0):
-            continue
-        # Otherwise go anywhere that brings us closer to the end
-        if manhattan_distance((newy, newx), end) < distance:
-            paths += [step + path for path in a_to_b_free((newy, newx), end)]
-    return set(paths)
+    # How far right and down are we moving? (can be negative)
+    y1, x1 = pad[key1]
+    y2, x2 = pad[key2]
+    rightward = (x2 - x1)
+    downward  = (y2 - y1)
 
-
-def full_path_free(code):
-    current = 'A'
-    path = []
-    for destination in code:
-        path.append(a_to_b_free(locations[current], locations[destination]))
-        path.append({'A'})
-        current = destination
-    return [''.join(x) for x in itertools.product(*path)]
-
-
-def free(codes):
-    result = []
-    for code in codes:
-        result += full_path_free(code)
-    return result
-
-
-@lru_cache(maxsize=None)
-def a_to_b_smooth(start, end):
-    if start == end:
-        return {''}
-    
-    paths = []
-    starty, startx = start
-    endy, endx = end
-
-    # Create the horizontal motion (like >> or <<<)
-    # and vertical motion (like vv or ^^^)
-    rightward = (endx - startx)
-    downward = (endy - starty)
+    # Make strings (eg: > or <<, and ^ or vv).
     horizontal = '>' * max(0, rightward) + '<' * max(0, -rightward)
-    vertical =   'v' * max(0, downward)  + '^' * max(0, -downward)
+    vertical   = 'v' * max(0, downward)  + '^' * max(0, -downward)
 
-    # If the horizontal move leaves us safe, we can do that first
-    if (starty, endx) != (3, 0):
-        paths.append(horizontal + vertical)
-    # If the vertical move leaves us safe, we can do that first
-    # (And possibly, we can do either)
-    if (endy, startx) != (3, 0):
-        paths.append(vertical + horizontal)
+    # If moving horizontal first puts us on the gap, move vertical first.
+    if (y1, x2) == pad['gap']:
+        return vertical + horizontal
+    # If moving vertical first puts us on the gap, move horizontal first.
+    if (y2, x1) == pad['gap']:
+        return horizontal + vertical
+    
+    # Else, by fiat, move horizontal first.
+    return horizontal + vertical
+    
 
-    return set(paths)
-
-
-def full_path_smooth(code):
+def path(code):
     current = 'A'
-    path = []
+    path = ''
     for destination in code:
-        path.append(a_to_b_smooth(locations[current], locations[destination]))
-        path.append({'A'})
+        path += key_to_key_path(current, destination) + 'A'
         current = destination
-    return [''.join(x) for x in itertools.product(*path)]
-
-
-def smooth(codes):
-    result = []
-    for code in codes:
-        result += full_path_smooth(code)
-    return result
+    return path
 
 
 def complexity(code):
-    options = list(free(smooth(smooth([code]))))
-    shortest = min(options, key=len)
-    length = len(shortest)
-
+    length = len(path(path(path(code))))
     numeric_part = int(code[:-1])
-
+    print(code, length, numeric_part)
     return length * numeric_part
 
 
@@ -170,7 +122,6 @@ with open('input.txt', 'r') as f:
 total = 0
 
 for code in codes:
-    print(code, complexity(code))
     total += complexity(code)
 
 print(f'Part 1: {total}')
