@@ -16,7 +16,7 @@
 #         but changing from (for example) ^ to > and back needlessly
 #         will take extra moves on the next level.
 
-# Fact 3: It doesn't matter whether we do horizontal or vertical first,
+# Naive idea 3: It doesn't matter whether we do horizontal or vertical first,
 #         (as long as the resulting sequence doesn't go off the edge).
 #         There's no difference between (for example) >>^^^A and ^^^>>A,
 #         because at the next level (assuming we start at A),
@@ -24,11 +24,17 @@
 #         and by symmetry the path length is the same.
 #         (And both orders clearly take 6 A presses).
 
-# Consequence of all this:
-# For any starting key and destination key,
-# there's only one path between them that is worth considering.
-# For example from 1 to 9, we can define the path as ONLY >>^^,
-# and ignore all other orders, and never recalculate it.
+# Correction for 3: It can matter.
+#         It's true that the sequence is the same length (>^A vs ^>A),
+#         and that the next level is the same length because
+#         we either travel from A to > to ^ to A, or from A to ^ to > to A.
+#         However, the next level after that can be different lengths.
+#         Unfortunately this comment is too narrow to contain a proof of that.
+
+# Repair for this problem: There is always some universally best order anyway.
+#         For example, "if you're moving up and left, move left before up."
+#         Or perhaps the opposite. I found out by trying all 4 factorial orders.
+#         Turns out one good rule is: downs, then rights, then lefts, then ups.
 
 # 789
 # 456
@@ -97,14 +103,14 @@ def key_to_key_path(key1, key2):
     
     # Otherwise use this magic order.
     return down + right + left + up
-    #return down + right + left + up # THIS IS IT!!!!
-    #return down + left + up + right # This one also works
-    #return down + left + right + up # This also works
-    #return left + up + down + right # This works
-    #return left + down + up + right # This works
-    #return left + down + right + up # This works
+    # This somehow guarantees the shortest sequence. See above.
+    # In fact there are 6 orders like this (drlu, dlur, dlru, ludr, ldur, ldru).
+    # I'm not exactly sure why this happens.
+    # Seems like the requirements are: down before right, left before up,
+    # and otherwise the order is irrelevant.
+    # I'm sure it has something to do with the arrangement of the
+    # directional pad, but I'm not sure exactly what.
 
-    
 
 def path(code):
     current = 'A'
