@@ -68,11 +68,11 @@ DIRPAD = {
     'gap': (0, 0),
 }
 
-def key_to_key_path(key1, key2):
-    """Return the "single worthwhile path" from key1 to key2.
-    
-    Other paths are possible, and maybe even equally good,
-    but that doesn't matter (see above).
+def key_to_key_sequence(key1, key2):
+    """Return the "best" sequence that gets from key1 to key2.
+
+    There are many possible paths, and possibly some are equally good,
+    but this function produces one that is optimal.
     """
     # Determine which keypad we're using: numpad or dirpad.
     if key1 == key2:
@@ -112,17 +112,19 @@ def key_to_key_path(key1, key2):
     # directional pad, but I'm not sure exactly what.
 
 
-def path(code):
+def sequence(code):
+    """Return the shortest sequence to produce the code."""
     current = 'A'
     path = ''
     for destination in code:
-        path += key_to_key_path(current, destination) + 'A'
+        path += key_to_key_sequence(current, destination) + 'A'
         current = destination
     return path
 
 
 def complexity(code):
-    length = len(path(path(path(code))))
+    """The complexity of the code (sequence length * numerical part)."""
+    length = len(sequence(sequence(sequence(code))))
     numeric_part = int(code[:-1])
     print(code, length, numeric_part)
     return length * numeric_part
