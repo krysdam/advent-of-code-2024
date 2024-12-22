@@ -1,3 +1,6 @@
+from functools import lru_cache
+import time
+
 # Me <^v> Robot <^v> Robot <^v> Robot 0123456789 Door
 #    level 3    level 2    level 1      level 0
 
@@ -68,6 +71,7 @@ DIRPAD = {
     'gap': (0, 0),
 }
 
+@lru_cache(maxsize=None)
 def key_to_key_sequence(key1, key2):
     """Return the "best" sequence that gets from key1 to key2.
 
@@ -122,9 +126,24 @@ def sequence(code):
     return path
 
 
-def complexity(code):
+def sequence_with_intermediaries(code, intermediaries=0):
+    result = code
+    last_result = time.time()
+    delays = [1]
+    for r in range(intermediaries):
+        result = sequence(result)
+        delay = time.time() - last_result
+        last_result = time.time()
+        delay_ratio = delay / delays[-1]
+        delays.append(delay)
+
+        print(f'Level {r+1}: {len(result)} (took {delay:.2f}s)')
+    return result
+
+
+def complexity(code, intermediaries=0):
     """The complexity of the code (sequence length * numerical part)."""
-    length = len(sequence(sequence(sequence(code))))
+    length = len(sequence_with_intermediaries(code, intermediaries))
     numeric_part = int(code[:-1])
     print(code, length, numeric_part)
     return length * numeric_part
@@ -137,8 +156,13 @@ with open('input.txt', 'r') as f:
         codes.append(line)
 
 total = 0
-
 for code in codes:
-    total += complexity(code)
-
+    total += complexity(code, intermediaries=3)
 print(f'Part 1: {total}')
+print('\n')
+
+total = 0
+for code in codes:
+    total += complexity(code, intermediaries=25)
+print(f'Part 2: {total}')
+print('\n')
