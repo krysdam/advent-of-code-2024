@@ -36,8 +36,13 @@ import time
 
 # Repair for this problem: There is always some universally best order anyway.
 #         For example, "if you're moving up and left, move left before up."
-#         Or perhaps the opposite. I found out by trying all 4 factorial orders.
 #         Turns out one good rule is: any left, then vertical, then any right.
+#         See this thread on the Reddit for a discussion of this fact:
+#         reddit.com/r/adventofcode/comments/1hj7f89/
+#         The gist appears to be that moving left before vertical
+#         keeps all the left moves consecutive on later levels,
+#         rather than moving all the way from A to < and back repeatedly.
+#         The same reasoning applies to moving vertically before right.
 
 # 789
 # 456
