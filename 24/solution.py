@@ -41,7 +41,9 @@ class Gate():
 
     def __str__(self):
         opname = OPERATOR_NAMES[self.op]
-        return f'[{self.in1.name} {opname} {self.in2.name} --> {self.out.name}]'
+        s = f'[{self.in1.name} {opname} {self.in2.name} --> {self.out.name}]'
+        s += f' @ l{self.level}'
+        return s
     
     def __repr__(self):
         return str(self)
@@ -105,17 +107,17 @@ while not all_have_levels:
             gate.level = out_level
             highest_level = max(highest_level, out_level)
 
-# Print every gate and wire, according to level.
+# Uncomment lines here to print the parts of the device.
 for level in range(highest_level+1):
-    for gate in sorted(gates, key = lambda g: g.in1.name):
+    for gate in sorted(gates, key = lambda g: str(g)):
         if gate.level == level:
             gate.apply()
-            print(gate)
-    for wirename in wires:
-        wire = wires[wirename]
-        if wire.level == level:
-            print(wire)
-    print()
+            #print(gate)
+    #for wirename in wires:
+    #    wire = wires[wirename]
+    #    if wire.level == level:
+    #        print(wire)
+   #print()
 
 def bits_to_number(bits):
     """Convert the list of bits (little-endian) to an int."""
@@ -126,10 +128,42 @@ def bits_to_number(bits):
         result += bit
     return result
 
+
 # Part 1: What is the current output of the device?
 zwires = [wires[name] for name in wires if name[0] == 'z']
 zwires.sort(key = lambda w: w.name)
-print(zwires)
 zbits = [wire.value for wire in zwires]
 znum = bits_to_number(zbits)
 print(f'Part 1: {znum}')
+
+
+# Part 2: What four pairs of output wires are swapped?
+# Doing this in the general case may be intractible.
+# Certainly, doing it for only one input manually
+# is easier than designing a general algorithm.
+
+# I used the printing code above to find the right swaps.
+# The device has basically two steps, similar to gradeschool arithmetic.
+# Imagine the two input numbers x and y one over the other.
+# The first step is to find the XOR (sum) and AND (carry) of each column.
+# The second step is to "cascade" these carries to the left,
+# finding one more bit of the answer per iteration.
+
+# One swap put z10 into the "sum and carry" step instead of step 2.
+# --> Swap z10 and vcf
+
+# One swap made z17 the output of an AND instead of the corresponding XOR.
+# --> Swap z17 and fhg
+
+# One swap put z39 one iteration layer than it should be.
+# --> Swap z39 and tnc
+
+# One swap swapped a "sum" and "carry" result in the same column.
+# --> Swap fsq and dvb
+
+# Sort these
+swaps = ['z10', 'vcf', 'z17', 'fhg', 'z39', 'tnc', 'fsq', 'dvb']
+code = ','.join(sorted(swaps))
+print(f'Part 2: {code}')
+print('NOTE: This part 2 answer was found manually.',
+      'It is only correct for some inputs.')
